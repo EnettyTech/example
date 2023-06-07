@@ -40,12 +40,13 @@ function App() {
 
   React.useEffect(() => {
     if (wallet.current) {
+      console.log("start listener...")
       wallet.current?.on('txHashGenerated', response => {
         console.log('txHashGenerated event received via emitter', response);
       })
       wallet.current?.on('txMined', response => {
         console.log('txMined event received via emitter', response);
-        alert("Transaction is confirmed on " + response.transactionHash)
+        alert("Transaction is confirmed on " + response.hash)
       })
       wallet.current?.on('error', response => {
         console.log('error event received via emitter', response);
@@ -54,7 +55,7 @@ function App() {
     return () => {
       wallet.current?.removeAllListeners()
     }
-  }, [wallet])
+  }, [wallet.current])
 
   const createWallet = async () => {
     try {
@@ -85,7 +86,7 @@ function App() {
     const tx = {
       to: "0x908F050989875E3fEeb077b24a982AE7fB711995",
       data: "0x",
-      value: ethers.utils.parseEther(Number(0.0001).toString()),
+      value: ethers.utils.parseEther('0.0001'),
     }
     // Sending transaction
     console.log("🚀 ~ file: App.tsx:95 ~ sendMatic ~ tx:", tx)
@@ -100,23 +101,27 @@ function App() {
       return
     }
     const usdcContract = new ethers.Contract(config.usdc.address, config.usdc.abi, provider)
-    const transfer = await usdcContract.populateTransaction.transfer("0xcdba4bc7b318317b29329a128698bab94145cca7", ethers.BigNumber.from("1000000")); // 1 USDC
+    const transfer = await usdcContract.populateTransaction.transfer("0x908F050989875E3fEeb077b24a982AE7fB711995", ethers.BigNumber.from("1000000")); // 1 USDC
     const tx = {
       to: config.usdc.address,
       data: transfer.data
     }
+    console.log("🚀 ~ file: App.tsx:105 ~ sendUSDC ~ tx:", tx)
 
     const feeQuotes = await wallet.current.getFeeQuotes({
       transaction: tx,
     });
+    console.log("🚀 ~ file: App.tsx:110 ~ sendUSDC ~ feeQuotes:", feeQuotes)
 
     const quote = feeQuotes[0] // use native for payment fee
+    console.log("🚀 ~ file: App.tsx:112 ~ sendUSDC ~ quote:", quote)
 
     const transaction =
       await wallet.current.createUserPaidTransaction({
         transaction: tx,
         feeQuote: quote,
       });
+    console.log("🚀 ~ file: App.tsx:116 ~ sendUSDC ~ transaction:", transaction)
 
     await wallet.current.sendUserPaidTransaction({
       tx: transaction,
